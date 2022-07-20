@@ -20,6 +20,9 @@ class TechnicalIndicatorGenerator(object):
                                                                               df['Mid_Close'])
         df['squeeze_on'] = TechnicalIndicatorGenerator.squeeze(df)
 
+        df.dropna(inplace=True)
+        df.reset_index(drop=True, inplace=True)
+
         tups = [TechnicalIndicatorGenerator.add_fractal(df, i) for i in range(df.shape[0])]
         key_levels, is_supports = [tup[0] for tup in tups], [tup[1] for tup in tups]
         df['key_level'], df['is_support'] = key_levels, is_supports

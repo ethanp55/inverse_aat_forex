@@ -8,4 +8,4 @@ def grab_image_data(subset):
     return gasf_subset
 
 
-CNN_LOOKBACK = 150
+CNN_LOOKBACK = 250

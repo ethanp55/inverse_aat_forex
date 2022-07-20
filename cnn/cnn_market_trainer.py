@@ -3,8 +3,8 @@ from copy import deepcopy
 from datetime import datetime
 from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.trades import TradeType
+from ml_models.learner import Learner
 import numpy as np
-from pandas import DataFrame
 import pickle
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPool2D, Flatten
 from tensorflow.keras.optimizers import Adam
@@ -12,13 +12,9 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras.models import Sequential
 
 
-class CnnMarketTrainer:
-    def __init__(self, training_data_percentage: float, currency_pair: CurrencyPairs) -> None:
-        if not 0.0 < training_data_percentage < 1.0:
-            raise Exception(f'Training data percentage is not between 0 and 1: {training_data_percentage}')
-        self.training_data_percentage = training_data_percentage
-        self.currency_pair = currency_pair
-        self.buy_dates, self.sell_dates, self.no_trade_dates = [], [], []
+class CnnMarketTrainer(Learner):
+    def __init__(self, training_data_percentage: float, currency_pair: CurrencyPairs, date_range: str) -> None:
+        Learner.__init__(self, training_data_percentage, currency_pair, date_range)
 
     def trade_finished(self, net_profit: float, start_date: datetime, trade_type: TradeType) -> None:
         if net_profit <= 0:
@@ -30,22 +26,14 @@ class CnnMarketTrainer:
         else:
             self.sell_dates.append(start_date)
 
-    def save_data(self, market_data: DataFrame) -> None:
-        df = deepcopy(market_data)
+    def save_data(self) -> None:
+        df = deepcopy(self.market_data)
         df.drop(['Bid_Open', 'Bid_High', 'Bid_Low', 'Bid_Close', 'Ask_Open', 'Ask_High', 'Ask_Low', 'Ask_Close',
                  'Mid_Open', 'Mid_High', 'Mid_Low', 'Mid_Close', 'Volume'], axis=1, inplace=True)
-
-        buy_indices_list = []
-        sell_indices_list = []
-        nones_indices_list = []
 
         buy_indices = [df.index[df['Date'] == curr_date] - 1 for curr_date in self.buy_dates]
         sell_indices = [df.index[df['Date'] == curr_date] - 1 for curr_date in self.sell_dates]
         nones_indices = [df.index[df['Date'] == curr_date] - 1 for curr_date in self.no_trade_dates]
-
-        buy_indices_list.append(buy_indices)
-        sell_indices_list.append(sell_indices)
-        nones_indices_list.append(nones_indices)
 
         print(len(buy_indices))
         print(len(sell_indices))
@@ -55,6 +43,8 @@ class CnnMarketTrainer:
         i = len(df) - 2
         seq = df.iloc[i - CNN_LOOKBACK + 1:i + 1, 1:]
         correct_shape = grab_image_data(seq).shape
+
+        print(correct_shape)
 
         no_actions, buys, sells = [], [], []
 
@@ -103,10 +93,6 @@ class CnnMarketTrainer:
         with open(file_path, 'wb') as f:
             pickle.dump(training_data, f)
 
-        x = np.array(training_data)
-
-        print(x.shape)
-
     def train_cnn(self):
         data_path = f'../cnn/training_data/{self.currency_pair.value}_training_data_cnn.pickle'
 
@@ -140,7 +126,11 @@ class CnnMarketTrainer:
         x_test = np.array(x_test)
         y_test = np.array(y_test)
 
+        print(x_train.shape)
+        print(y_train.shape)
+
         input_data_shape = x_train.shape[1:]
+        n_actions = 3  # Buy, Sell, Do nothing
 
         model = Sequential()
 
@@ -158,7 +148,7 @@ class CnnMarketTrainer:
         model.add(Dense(64, activation='relu'))
         model.add(Dropout(0.25))
         model.add(Dense(32, activation='relu'))
-        model.add(Dense(1))
+        model.add(Dense(n_actions, activation='softmax'))
 
         n_epochs = 100
         batch_size = 32

@@ -134,3 +134,6 @@ dmypy.json
 
 # Mac
 .DS_Store
+
+# Pickle files - the ones for this project are typically too big for git
+*.pickle

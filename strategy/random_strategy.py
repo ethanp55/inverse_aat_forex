@@ -1,12 +1,10 @@
-from aat.aat_market_trainer import AatMarketTrainer
-from aat.aat_market_tester import AatMarketTester
-from datetime import datetime
 from pandas import DataFrame
 from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.data_retriever import DataRetriever
 from market_proxy.market_calculations import MarketCalculations
 from market_proxy.market_simulator import MarketSimulator
 from market_proxy.trades import Trade, TradeType
+from ml_models.learner import Learner
 import random
 from strategy.strategy_class import Strategy
 from strategy.strategy_results import StrategyResults
@@ -25,7 +23,6 @@ class RandomStrategy(Strategy):
     def place_trade(self, curr_idx: int, market_data: DataFrame) -> Optional[Trade]:
         curr_bid_open, curr_ask_open, curr_mid_open, curr_date = \
             market_data.loc[market_data.index[curr_idx], ['Bid_Open', 'Ask_Open', 'Mid_Open', 'Date']]
-        filtered_date = datetime.strptime(curr_date, '%Y-%m-%d %H:%M:%S')
         spread = abs(curr_ask_open - curr_bid_open)
 
         mid_highs = list(market_data.loc[market_data.index[curr_idx - self.lookback:curr_idx], 'Mid_High'])
@@ -52,7 +49,7 @@ class RandomStrategy(Strategy):
                                                              curr_mid_open, self.currency_pair)
 
                     trade = Trade(trade_type, open_price, stop_loss, stop_gain, n_units, n_units, curr_pips_to_risk,
-                                  filtered_date, None)
+                                  curr_date, None)
 
         elif sell_signal:
             open_price = float(curr_bid_open)
@@ -68,13 +65,14 @@ class RandomStrategy(Strategy):
                                                              curr_mid_open, self.currency_pair)
 
                     trade = Trade(trade_type, open_price, stop_loss, stop_gain, n_units, n_units, curr_pips_to_risk,
-                                  filtered_date, None)
+                                  curr_date, None)
 
         return trade
 
-    def run_strategy(self, currency_pair: CurrencyPairs, aat_trainer: Optional[AatMarketTrainer] = None,
-                     aat_tester: Optional[AatMarketTester] = None) -> StrategyResults:
+    def run_strategy(self, currency_pair: CurrencyPairs, date_range: str,
+                     learner: Optional[Learner] = None) -> StrategyResults:
         self.currency_pair = currency_pair
-        market_data = DataRetriever.get_data_for_pair(currency_pair)
+        market_data = DataRetriever.get_data_for_pair(currency_pair, date_range) if learner is None else \
+            learner.market_data
 
-        return MarketSimulator.run_simulation(self, market_data, aat_trainer, aat_tester)
+        return MarketSimulator.run_simulation(self, market_data, learner)

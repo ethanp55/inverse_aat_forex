@@ -6,7 +6,7 @@ RISK_REWARD_RATIO = 1.5
 SPREAD_PERCENTAGE = 0.10
 STOPLOSS_LOOKBACK = 12
 CURRENCY_PAIR = CurrencyPairs.EUR_USD
-DATE_RANGE = '2012-2018'
+DATE_RANGE = '2018-2020'
 TRAINING_DATA_PERCENTAGE = 0.7
 
 random_strategy = RandomStrategy(CNN_LOOKBACK, RISK_REWARD_RATIO, SPREAD_PERCENTAGE, STOPLOSS_LOOKBACK)
@@ -17,4 +17,4 @@ print(results)
 
 cnn_trainer.save_data()
 
-# cnn_trainer.train_cnn()
+cnn_trainer.train()

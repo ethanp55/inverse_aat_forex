@@ -93,7 +93,7 @@ class CnnMarketTrainer(Learner):
         with open(file_path, 'wb') as f:
             pickle.dump(training_data, f)
 
-    def train_cnn(self):
+    def train(self) -> None:
         data_path = f'../cnn/training_data/{self.currency_pair.value}_training_data_cnn.pickle'
 
         training_data = np.array(pickle.load(open(data_path, 'rb')))
@@ -143,16 +143,12 @@ class CnnMarketTrainer(Learner):
         model.add(Dropout(0.25))
 
         model.add(Flatten())
-        model.add(Dense(128, activation='relu'))
-        model.add(Dropout(0.5))
         model.add(Dense(64, activation='relu'))
-        model.add(Dropout(0.25))
-        model.add(Dense(32, activation='relu'))
         model.add(Dense(n_actions, activation='softmax'))
 
         n_epochs = 100
         batch_size = 32
-        patience_percentage = 1.0
+        patience_percentage = 0.2
 
         path = f'../cnn/training_data/{self.currency_pair.value}_trained_cnn'
 

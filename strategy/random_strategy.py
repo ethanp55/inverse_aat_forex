@@ -1,9 +1,8 @@
 from pandas import DataFrame
 from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.data_retriever import DataRetriever
-from market_proxy.market_calculations import MarketCalculations
 from market_proxy.market_simulator import MarketSimulator
-from market_proxy.trades import Trade, TradeType
+from market_proxy.trades import Trade, TradeCalculations, TradeType
 from ml_models.learner import Learner
 import random
 from strategy.strategy_class import Strategy
@@ -45,8 +44,8 @@ class RandomStrategy(Strategy):
                 if spread <= curr_pips_to_risk * self.spread_cutoff:
                     stop_gain = open_price + (self.risk_reward_ratio * curr_pips_to_risk)
                     trade_type = TradeType.BUY
-                    n_units = MarketCalculations.get_n_units(trade_type, stop_loss, curr_ask_open, curr_bid_open,
-                                                             curr_mid_open, self.currency_pair)
+                    n_units = TradeCalculations.get_n_units(trade_type, stop_loss, curr_ask_open, curr_bid_open,
+                                                            curr_mid_open, self.currency_pair)
 
                     trade = Trade(trade_type, open_price, stop_loss, stop_gain, n_units, n_units, curr_pips_to_risk,
                                   curr_date, None)
@@ -61,8 +60,8 @@ class RandomStrategy(Strategy):
                 if spread <= curr_pips_to_risk * self.spread_cutoff:
                     stop_gain = open_price - (self.risk_reward_ratio * curr_pips_to_risk)
                     trade_type = TradeType.SELL
-                    n_units = MarketCalculations.get_n_units(trade_type, stop_loss, curr_ask_open, curr_bid_open,
-                                                             curr_mid_open, self.currency_pair)
+                    n_units = TradeCalculations.get_n_units(trade_type, stop_loss, curr_ask_open, curr_bid_open,
+                                                            curr_mid_open, self.currency_pair)
 
                     trade = Trade(trade_type, open_price, stop_loss, stop_gain, n_units, n_units, curr_pips_to_risk,
                                   curr_date, None)

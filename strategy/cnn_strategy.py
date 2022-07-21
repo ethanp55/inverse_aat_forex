@@ -1,9 +1,8 @@
 from cnn.cnn_utilities import CNN_LOOKBACK, grab_image_data
 from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.data_retriever import DataRetriever
-from market_proxy.market_calculations import MarketCalculations
 from market_proxy.market_simulator import MarketSimulator
-from market_proxy.trades import Trade, TradeType
+from market_proxy.trades import Trade, TradeCalculations, TradeType
 from ml_models.learner import Learner
 import numpy as np
 from pandas import DataFrame
@@ -41,8 +40,8 @@ class CnnStrategy(Strategy):
         argmax = np.argmax(pred)
         proba = pred[0][argmax].numpy()
 
-        cnn_buy_signal = argmax == 1 and proba >= self.proba_threshold
-        cnn_sell_signal = argmax == 2 and proba >= self.proba_threshold
+        cnn_buy_signal = argmax == TradeType.BUY.value and proba >= self.proba_threshold
+        cnn_sell_signal = argmax == TradeType.SELL.value and proba >= self.proba_threshold
 
         trade = None
 
@@ -70,11 +69,11 @@ class CnnStrategy(Strategy):
                     if spread <= curr_pips_to_risk * self.spread_cutoff:
                         stop_gain = open_price + (self.risk_reward_ratio * curr_pips_to_risk)
                         trade_type = TradeType.BUY
-                        n_units = MarketCalculations.get_n_units(trade_type, stop_loss, curr_ask_open, curr_bid_open,
-                                                                 curr_mid_open, self.currency_pair)
+                        n_units = TradeCalculations.get_n_units(trade_type, stop_loss, curr_ask_open, curr_bid_open,
+                                                                curr_mid_open, self.currency_pair)
 
                         trade = Trade(trade_type, open_price, stop_loss, stop_gain, n_units, n_units, curr_pips_to_risk,
-                                      curr_date, None)
+                                      curr_date)
 
             elif cnn_sell_signal:
                 open_price = float(curr_bid_open)
@@ -86,11 +85,11 @@ class CnnStrategy(Strategy):
                     if spread <= curr_pips_to_risk * self.spread_cutoff:
                         stop_gain = open_price - (self.risk_reward_ratio * curr_pips_to_risk)
                         trade_type = TradeType.SELL
-                        n_units = MarketCalculations.get_n_units(trade_type, stop_loss, curr_ask_open, curr_bid_open,
-                                                                 curr_mid_open, self.currency_pair)
+                        n_units = TradeCalculations.get_n_units(trade_type, stop_loss, curr_ask_open, curr_bid_open,
+                                                                curr_mid_open, self.currency_pair)
 
                         trade = Trade(trade_type, open_price, stop_loss, stop_gain, n_units, n_units, curr_pips_to_risk,
-                                      curr_date, None)
+                                      curr_date)
 
         return trade
 

@@ -31,12 +31,13 @@ class AatMarketTrainerForCnnModel(AatMarketTrainer):
             market_data.loc[market_data.index[curr_idx - 1], ['ema200', 'ema100', 'atr', 'atr_sma', 'rsi', 'rsi_sma',
                                                               'adx', 'macd', 'macdsignal', 'slowk_rsi', 'slowd_rsi',
                                                               'vo', 'willy', 'willy_ema', 'key_level', 'is_support']]
-        mid_open = market_data.loc[market_data.index[curr_idx], 'Mid_Open']
+        bid_open, ask_open = market_data.loc[market_data.index[curr_idx], ['Bid_Open', 'Ask_Open']]
 
         ti_vals = TechnicalIndicators(ema200, ema100, atr, atr_sma, rsi, rsi_sma, adx, macd, macdsignal, slowk_rsi,
                                       slowd_rsi, vo, willy, willy_ema)
 
-        new_assumptions = Assumptions(ti_vals, mid_open, key_level, is_support, self.near_level_pips, trade_type)
+        new_assumptions = Assumptions(ti_vals, bid_open, ask_open, key_level, is_support, self.near_level_pips,
+                                      trade_type)
         new_tup = new_assumptions.create_aat_tuple()
 
         self.training_data.append(new_tup)

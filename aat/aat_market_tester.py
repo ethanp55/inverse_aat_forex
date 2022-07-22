@@ -45,16 +45,18 @@ class AatMarketTesterForCnnModel(AatMarketTester):
 
     def make_prediction(self, curr_idx: int, market_data: DataFrame, true_trade_type: TradeType) -> None:
         ema200, ema100, atr, atr_sma, rsi, rsi_sma, adx, macd, macdsignal, slowk_rsi, slowd_rsi, \
-            vo, willy, willy_ema, key_level, is_support, mid_open = \
+            vo, willy, willy_ema, key_level, is_support = \
             market_data.loc[market_data.index[curr_idx - 1], ['ema200', 'ema100', 'atr', 'atr_sma', 'rsi', 'rsi_sma',
                                                               'adx', 'macd', 'macdsignal', 'slowk_rsi', 'slowd_rsi',
-                                                              'vo', 'willy', 'willy_ema', 'key_level', 'is_support',
-                                                              'Mid_Open']]
+                                                              'vo', 'willy', 'willy_ema', 'key_level', 'is_support']]
+
+        bid_open, ask_open = market_data.loc[market_data.index[curr_idx], ['Bid_Open', 'Ask_Open']]
 
         ti_vals = TechnicalIndicators(ema200, ema100, atr, atr_sma, rsi, rsi_sma, adx, macd, macdsignal, slowk_rsi,
                                       slowd_rsi, vo, willy, willy_ema)
 
-        new_assumptions = Assumptions(ti_vals, mid_open, key_level, is_support, self.near_level_pips, true_trade_type)
+        new_assumptions = Assumptions(ti_vals, bid_open, ask_open, key_level, is_support, self.near_level_pips,
+                                      true_trade_type)
         new_tup = new_assumptions.create_aat_tuple()
 
         x = np.array(new_tup[0:-1]).reshape(1, -1)

@@ -8,11 +8,10 @@ STOPLOSS_LOOKBACK = 12
 CURRENCY_PAIR = CurrencyPairs.EUR_USD
 PROBA_THRESHOLD = 0.0
 DATE_RANGE = '2020-2022'
-NEAR_LEVEL_PIPS = 0.0010
 
 cnn_strategy = CnnStrategy(CNN_LOOKBACK, RISK_REWARD_RATIO, CURRENCY_PAIR, PROBA_THRESHOLD,
                            STOPLOSS_LOOKBACK, SPREAD_PERCENTAGE)
-aat_tester = AatMarketTesterForCnnModel(CURRENCY_PAIR, NEAR_LEVEL_PIPS)
+aat_tester = AatMarketTesterForCnnModel(CURRENCY_PAIR)
 
 results = cnn_strategy.run_strategy(CURRENCY_PAIR, DATE_RANGE, aat_tester=aat_tester)
 print(results)

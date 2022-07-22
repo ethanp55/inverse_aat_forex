@@ -31,9 +31,8 @@ class AatMarketTester:
 
 
 class AatMarketTesterForCnnModel(AatMarketTester):
-    def __init__(self, currency_pair: CurrencyPairs, near_level_pips: float) -> None:
+    def __init__(self, currency_pair: CurrencyPairs) -> None:
         AatMarketTester.__init__(self, currency_pair)
-        self.near_level_pips = near_level_pips
 
         scaler_path = f'../aat/training_data/{self.currency_pair.value}_trained_knn_scaler_aat.pickle'
         knn_path = f'../aat/training_data/{self.currency_pair.value}_trained_knn_aat.pickle'
@@ -55,8 +54,7 @@ class AatMarketTesterForCnnModel(AatMarketTester):
         ti_vals = TechnicalIndicators(ema200, ema100, atr, atr_sma, rsi, rsi_sma, adx, macd, macdsignal, slowk_rsi,
                                       slowd_rsi, vo, willy, willy_ema)
 
-        new_assumptions = Assumptions(ti_vals, bid_open, ask_open, key_level, is_support, self.near_level_pips,
-                                      true_trade_type)
+        new_assumptions = Assumptions(ti_vals, bid_open, ask_open, key_level, true_trade_type)
         new_tup = new_assumptions.create_aat_tuple()
 
         x = np.array(new_tup[0:-1]).reshape(1, -1)

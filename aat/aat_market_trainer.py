@@ -20,9 +20,8 @@ class AatMarketTrainer:
 
 
 class AatMarketTrainerForCnnModel(AatMarketTrainer):
-    def __init__(self, currency_pair: CurrencyPairs, near_level_pips: float) -> None:
+    def __init__(self, currency_pair: CurrencyPairs) -> None:
         AatMarketTrainer.__init__(self, currency_pair)
-        self.near_level_pips = near_level_pips
         self.training_data = []
 
     def record_tuple(self, curr_idx: int, market_data: DataFrame, trade_type: TradeType) -> None:
@@ -36,8 +35,7 @@ class AatMarketTrainerForCnnModel(AatMarketTrainer):
         ti_vals = TechnicalIndicators(ema200, ema100, atr, atr_sma, rsi, rsi_sma, adx, macd, macdsignal, slowk_rsi,
                                       slowd_rsi, vo, willy, willy_ema)
 
-        new_assumptions = Assumptions(ti_vals, bid_open, ask_open, key_level, is_support, self.near_level_pips,
-                                      trade_type)
+        new_assumptions = Assumptions(ti_vals, bid_open, ask_open, key_level, trade_type)
         new_tup = new_assumptions.create_aat_tuple()
 
         self.training_data.append(new_tup)

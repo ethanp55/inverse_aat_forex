@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from market_proxy.trades import TradeType
 from typing import List
 
 
@@ -25,12 +26,17 @@ class TechnicalIndicators:
 
 
 class Assumptions:
-    def __init__(self, n_candles_since_open: int, ti_vals: TechnicalIndicators, prediction: float) -> None:
-        self.n_candles_since_open = float(n_candles_since_open)
+    def __init__(self, ti_vals: TechnicalIndicators, mid_open: float, key_level: float, is_support: int,
+                 near_level_pips: float, prediction: TradeType) -> None:
         self.ti_vals = ti_vals
-        self.prediction = prediction
+        self.near_level = abs(mid_open - key_level) <= near_level_pips
+        self.above_level = mid_open > key_level
+        self.level_is_support = is_support
+        self.up_trend = ti_vals.ema100 > ti_vals.ema200
+        self.prediction = prediction.value
 
     def create_aat_tuple(self) -> List[float]:
-        return [self.n_candles_since_open] + self.ti_vals.get_values() + [self.prediction, self.prediction]
+        return self.ti_vals.get_values() + [self.near_level, self.above_level, self.level_is_support, self.up_trend,
+                                            self.prediction]
 
 

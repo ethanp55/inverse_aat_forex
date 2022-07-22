@@ -1,3 +1,5 @@
+from aat.aat_market_trainer import AatMarketTrainer
+from aat.aat_market_tester import AatMarketTester
 from pandas import DataFrame
 from market_proxy.trades import TradeType
 from ml_models.learner import Learner
@@ -9,24 +11,32 @@ from typing import Optional
 
 class MarketSimulator(object):
     @staticmethod
-    def run_simulation(strategy: Strategy, market_data: DataFrame,
-                       learner: Optional[Learner] = None) -> StrategyResults:
+    def run_simulation(strategy: Strategy, market_data: DataFrame, learner: Optional[Learner],
+                       aat_trainer: Optional[AatMarketTrainer],
+                       aat_tester: Optional[AatMarketTester]) -> StrategyResults:
         print(f'Running simulation for strategy with description: {strategy.description}')
 
         reward, n_wins, n_losses, win_streak, loss_streak, curr_win_streak, curr_loss_streak, n_buys, n_sells, \
             day_fees = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  # Numerical results we keep track of
-        pips_risked, trade, n_candles = [], None, 0
+        pips_risked, trade = [], None
 
         for idx in range(strategy.starting_idx, len(market_data)):
-            n_candles += 1
-
             # If there is no open trade, check to see if we should place one
             if trade is None:
                 trade = strategy.place_trade(idx, market_data)
+                trade_type = trade.trade_type if trade is not None else TradeType.NONE
 
+                # Train AAT
+                if aat_trainer is not None:
+                    aat_trainer.record_tuple(idx, market_data, trade_type)
+
+                # Test AAT
+                if aat_tester is not None:
+                    aat_tester.make_prediction(idx, market_data, trade_type)
+
+                # Update final result parameters
                 if trade is not None:
                     pips_risked.append(trade.pips_risked)
-                    n_candles = 0
 
                     if trade.trade_type == TradeType.BUY:
                         n_buys += 1
@@ -77,6 +87,10 @@ class MarketSimulator(object):
                         trade = None
 
                         break
+
+        # Save AAT data if we are training
+        if aat_trainer is not None:
+            aat_trainer.save_data()
 
         # Return the simulation results once we've iterated through all the data
         avg_pips_risked = np.array(pips_risked).mean() if len(pips_risked) > 0 else np.nan

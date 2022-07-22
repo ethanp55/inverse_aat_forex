@@ -1,3 +1,5 @@
+from aat.aat_market_trainer import AatMarketTrainer
+from aat.aat_market_tester import AatMarketTester
 from pandas import DataFrame
 from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.trades import Trade
@@ -16,5 +18,7 @@ class Strategy:
         pass
 
     def run_strategy(self, currency_pair: CurrencyPairs, date_range: str,
-                     learner: Optional[Learner] = None) -> StrategyResults:
+                     learner: Optional[Learner] = None,
+                     aat_trainer: Optional[AatMarketTrainer] = None,
+                     aat_tester: Optional[AatMarketTester] = None) -> StrategyResults:
         pass

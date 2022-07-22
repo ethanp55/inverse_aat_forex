@@ -11,6 +11,7 @@ AMOUNT_TO_RISK = 50.0
 
 
 class TradeType(enum.Enum):
+    NONE = 0
     BUY = 1
     SELL = 2
 

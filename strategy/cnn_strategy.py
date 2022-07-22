@@ -1,3 +1,5 @@
+from aat.aat_market_trainer import AatMarketTrainer
+from aat.aat_market_tester import AatMarketTester
 from cnn.cnn_utilities import CNN_LOOKBACK, grab_image_data
 from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.data_retriever import DataRetriever
@@ -94,9 +96,11 @@ class CnnStrategy(Strategy):
         return trade
 
     def run_strategy(self, currency_pair: CurrencyPairs, date_range: str,
-                     learner: Optional[Learner] = None) -> StrategyResults:
+                     learner: Optional[Learner] = None,
+                     aat_trainer: Optional[AatMarketTrainer] = None,
+                     aat_tester: Optional[AatMarketTester] = None) -> StrategyResults:
         self.currency_pair = currency_pair
         market_data = DataRetriever.get_data_for_pair(currency_pair, date_range) if learner is None else \
             learner.market_data
 
-        return MarketSimulator.run_simulation(self, market_data, learner)
+        return MarketSimulator.run_simulation(self, market_data, learner, aat_trainer, aat_tester)

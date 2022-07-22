@@ -9,15 +9,25 @@ import pickle
 class AatMarketTester:
     def __init__(self, currency_pair: CurrencyPairs) -> None:
         self.currency_pair = currency_pair
-        self.n_correct, self.n_predictions = 0, 0
+        self.n_correct_none_preds, self.n_correct_buy_preds, self.n_correct_sell_preds = 0, 0, 0
+        self.n_none_preds, self.n_buy_preds, self.n_sell_preds = 0, 0, 0
 
     def make_prediction(self, curr_idx: int, market_data: DataFrame, true_trade_type: TradeType) -> float:
         pass
 
     def print_results(self) -> None:
+        n_correct = self.n_correct_none_preds + self.n_correct_buy_preds + self.n_correct_sell_preds
+        n_preds = self.n_none_preds + self.n_buy_preds + self.n_sell_preds
+
         print('AAT PREDICTION RESULTS:')
-        print(f'Predicted {self.n_correct} out of {self.n_predictions} -- accuracy = '
-              f'{self.n_correct / self.n_predictions}')
+        print(f'Predicted {self.n_correct_none_preds} out of {self.n_none_preds} for no trades -- accuracy = '
+              f'{self.n_correct_none_preds / self.n_none_preds}')
+        print(f'Predicted {self.n_correct_buy_preds} out of {self.n_buy_preds} for buy trades -- accuracy = '
+              f'{self.n_correct_buy_preds / self.n_buy_preds}')
+        print(f'Predicted {self.n_correct_sell_preds} out of {self.n_sell_preds} for sell trades -- accuracy = '
+              f'{self.n_correct_sell_preds / self.n_sell_preds}')
+        print(f'Predicted {n_correct} out of {n_preds} overall trades -- accuracy = '
+              f'{n_correct / n_preds}')
 
 
 class AatMarketTesterForCnnModel(AatMarketTester):
@@ -108,5 +118,11 @@ class AatMarketTesterForCnnModel(AatMarketTester):
 
         pred = np.argmax([none_votes, buy_votes, sell_votes])
 
-        self.n_predictions += 1
-        self.n_correct += 1 if pred == true_trade_type.value else 0
+        # Update results
+        self.n_none_preds += 1 if pred == TradeType.NONE.value else 0
+        self.n_buy_preds += 1 if pred == TradeType.BUY.value else 0
+        self.n_sell_preds += 1 if pred == TradeType.SELL.value else 0
+
+        self.n_correct_none_preds += 1 if pred == TradeType.NONE.value and pred == true_trade_type.value else 0
+        self.n_correct_buy_preds += 1 if pred == TradeType.BUY.value and pred == true_trade_type.value else 0
+        self.n_correct_sell_preds += 1 if pred == TradeType.SELL.value and pred == true_trade_type.value else 0

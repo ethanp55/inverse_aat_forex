@@ -134,8 +134,52 @@ class AatRfMarketTesterForCnnModel(AatMarketTester):
         x = np.array(new_tup[0:-1]).reshape(1, -1)
         x_scaled = self.scaler.transform(x)
 
-        pred = self.rf_model.predict(x_scaled)
-        print(pred)
+        pred = self.rf_model.predict(x_scaled)[0]
+
+        # Update results
+        self.n_none_preds += 1 if pred == TradeType.NONE.value else 0
+        self.n_buy_preds += 1 if pred == TradeType.BUY.value else 0
+        self.n_sell_preds += 1 if pred == TradeType.SELL.value else 0
+
+        self.n_correct_none_preds += 1 if pred == TradeType.NONE.value and pred == true_trade_type.value else 0
+        self.n_correct_buy_preds += 1 if pred == TradeType.BUY.value and pred == true_trade_type.value else 0
+        self.n_correct_sell_preds += 1 if pred == TradeType.SELL.value and pred == true_trade_type.value else 0
+
+
+class AatReducedRfMarketTesterForCnnModel(AatMarketTester):
+    def __init__(self, currency_pair: CurrencyPairs) -> None:
+        AatMarketTester.__init__(self, currency_pair)
+
+        scaler_path = f'../aat/training_data/{self.currency_pair.value}_trained_reduced_rf_scaler_aat.pickle'
+        rf_path = f'../aat/training_data/{self.currency_pair.value}_trained_reduced_rf_aat.pickle'
+        feature_names_path = f'../aat/training_data/{self.currency_pair.value}_training_features.pickle'
+        features_used_path = f'../aat/training_data/{self.currency_pair.value}_reduced_rf_features_used.pickle'
+
+        self.scaler = pickle.load(open(scaler_path, 'rb'))
+        self.rf_model = pickle.load(open(rf_path, 'rb'))
+        feature_names = pickle.load(open(feature_names_path, 'rb'))
+        features_used = pickle.load(open(features_used_path, 'rb'))
+        self.feature_indices = [feature_names.index(feature_used) for feature_used in features_used]
+
+    def make_prediction(self, curr_idx: int, market_data: DataFrame, true_trade_type: TradeType) -> None:
+        ema200, ema100, atr, atr_sma, rsi, rsi_sma, adx, macd, macdsignal, slowk_rsi, slowd_rsi, \
+            vo, willy, willy_ema, key_level, is_support = \
+            market_data.loc[market_data.index[curr_idx - 1], ['ema200', 'ema100', 'atr', 'atr_sma', 'rsi', 'rsi_sma',
+                                                              'adx', 'macd', 'macdsignal', 'slowk_rsi', 'slowd_rsi',
+                                                              'vo', 'willy', 'willy_ema', 'key_level', 'is_support']]
+
+        bid_open, ask_open = market_data.loc[market_data.index[curr_idx], ['Bid_Open', 'Ask_Open']]
+
+        ti_vals = TechnicalIndicators(ema200, ema100, atr, atr_sma, rsi, rsi_sma, adx, macd, macdsignal, slowk_rsi,
+                                      slowd_rsi, vo, willy, willy_ema)
+
+        new_assumptions = Assumptions(ti_vals, bid_open, ask_open, key_level, true_trade_type)
+        new_tup = new_assumptions.create_aat_tuple()
+
+        x = np.array([new_tup[idx] for idx in self.feature_indices]).reshape(1, -1)
+        x_scaled = self.scaler.transform(x)
+
+        pred = self.rf_model.predict(x_scaled)[0]
 
         # Update results
         self.n_none_preds += 1 if pred == TradeType.NONE.value else 0

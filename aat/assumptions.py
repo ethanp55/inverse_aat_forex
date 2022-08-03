@@ -42,4 +42,28 @@ class Assumptions:
         return self.ti_vals.get_values() + [self.level_distance, self.up_trend, self.spread,
                                             self.spread_atr_percentage, self.prediction]
 
+    def create_aat_tuple_from_names(self, names: List[str]) -> List[float]:
+        tup = []
+        ti_names = list(self.ti_vals.__annotations__.keys())
+        other_names = [var_name for var_name in self.__dict__.keys() if var_name not in ['ti_vals', 'prediction']]
+
+        for name in names:
+            if name in ti_names:
+                tup.append(self.ti_vals.__getattribute__(name))
+
+            elif name in other_names:
+                tup.append(self.__getattribute__(name))
+
+            else:
+                raise Exception(f'Unknown feature name: {name}')
+
+        return tup
+
+    def assumption_names(self) -> List[str]:
+        ti_names = list(self.ti_vals.__annotations__.keys())
+        other_names = [var_name for var_name in self.__dict__.keys() if var_name not in ['ti_vals', 'prediction']]
+
+        return ti_names + other_names
+
+
 

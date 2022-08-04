@@ -1,9 +1,11 @@
 from aat.assumptions import Assumptions, TechnicalIndicators
+from aat.aat_communicator import AatCommunicator
 from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.trades import TradeType
 import numpy as np
 from pandas import DataFrame
 import pickle
+from typing import List
 
 
 class AatMarketTester:
@@ -27,7 +29,7 @@ class AatMarketTester:
         print(f'Predicted {self.n_correct_sell_preds} out of {self.n_sell_preds} for sell trades -- accuracy = '
               f'{self.n_correct_sell_preds / self.n_sell_preds}')
         print(f'Predicted {n_correct} out of {n_preds} overall trades -- accuracy = '
-              f'{n_correct / n_preds}')
+              f'{n_correct / n_preds}\n')
 
 
 class AatKnnMarketTesterForCnnModel(AatMarketTester):
@@ -106,9 +108,24 @@ class AatKnnMarketTesterForCnnModel(AatMarketTester):
         self.n_correct_sell_preds += 1 if pred == TradeType.SELL.value and pred == true_trade_type.value else 0
 
 
-class AatRfMarketTesterForCnnModel(AatMarketTester):
-    def __init__(self, currency_pair: CurrencyPairs) -> None:
+class AatMarketTesterWithCommunicator(AatMarketTester):
+    def __init__(self, currency_pair: CurrencyPairs, communicate_assumptions: bool, top_n_features: int) -> None:
         AatMarketTester.__init__(self, currency_pair)
+        self.aat_communicator = AatCommunicator(currency_pair, top_n_features) if communicate_assumptions else None
+
+    def communicate(self, aat_tup: List[float], pred: int, actual: int):
+        if self.aat_communicator is not None:
+            self.aat_communicator.communicate(aat_tup, pred, actual)
+
+    def communicate_outlier_results(self):
+        if self.aat_communicator is not None:
+            self.aat_communicator.outlier_results()
+
+
+class AatRfMarketTesterForCnnModel(AatMarketTesterWithCommunicator):
+    def __init__(self, currency_pair: CurrencyPairs, communicate_assumptions: bool = False,
+                 top_n_features: int = 0) -> None:
+        AatMarketTesterWithCommunicator.__init__(self, currency_pair, communicate_assumptions, top_n_features)
 
         scaler_path = f'../aat/training_data/{self.currency_pair.value}_trained_rf_scaler_aat.pickle'
         rf_path = f'../aat/training_data/{self.currency_pair.value}_trained_rf_aat.pickle'
@@ -145,10 +162,14 @@ class AatRfMarketTesterForCnnModel(AatMarketTester):
         self.n_correct_buy_preds += 1 if pred == TradeType.BUY.value and pred == true_trade_type.value else 0
         self.n_correct_sell_preds += 1 if pred == TradeType.SELL.value and pred == true_trade_type.value else 0
 
+        # Communicate any values
+        self.communicate(new_tup, pred, true_trade_type.value)
 
-class AatReducedRfMarketTesterForCnnModel(AatMarketTester):
-    def __init__(self, currency_pair: CurrencyPairs) -> None:
-        AatMarketTester.__init__(self, currency_pair)
+
+class AatReducedRfMarketTesterForCnnModel(AatMarketTesterWithCommunicator):
+    def __init__(self, currency_pair: CurrencyPairs, communicate_assumptions: bool = False,
+                 top_n_features: int = 0) -> None:
+        AatMarketTesterWithCommunicator.__init__(self, currency_pair, communicate_assumptions, top_n_features)
 
         scaler_path = f'../aat/training_data/{self.currency_pair.value}_trained_reduced_rf_scaler_aat.pickle'
         rf_path = f'../aat/training_data/{self.currency_pair.value}_trained_reduced_rf_aat.pickle'
@@ -189,3 +210,6 @@ class AatReducedRfMarketTesterForCnnModel(AatMarketTester):
         self.n_correct_none_preds += 1 if pred == TradeType.NONE.value and pred == true_trade_type.value else 0
         self.n_correct_buy_preds += 1 if pred == TradeType.BUY.value and pred == true_trade_type.value else 0
         self.n_correct_sell_preds += 1 if pred == TradeType.SELL.value and pred == true_trade_type.value else 0
+
+        # Communicate any values
+        self.communicate(new_tup, pred, true_trade_type.value)

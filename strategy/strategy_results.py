@@ -18,4 +18,4 @@ class StrategyResults:
         return f'RESULTS:\nreward = {self.reward}\nday fees = {self.day_fees}\nnet reward = {self.net_reward}' \
                f'\navg pips risked = {self.avg_pips_risked}\nbuys = {self.n_buys}\nsells = {self.n_sells}' \
                f'\nwins = {self.n_wins}\nlosses = {self.n_losses}\nlongest win streak = {self.longest_win_streak}' \
-               f'\nlongest loss streak = {self.longest_loss_streak}'
+               f'\nlongest loss streak = {self.longest_loss_streak}\n'

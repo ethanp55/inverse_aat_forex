@@ -9,12 +9,13 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
-from typing import List
+from typing import List, Optional
 
 
 class AatMarketTrainer:
-    def __init__(self, currency_pair: CurrencyPairs) -> None:
+    def __init__(self, currency_pair: CurrencyPairs, file_specifier: Optional[str] = None) -> None:
         self.currency_pair = currency_pair
+        self.file_specifier = file_specifier
         self.training_data = []
         self.feature_names = None
 
@@ -39,12 +40,21 @@ class AatMarketTrainer:
 
     def save_data(self) -> None:
         self._data_dir = '../aat/training_data'
+        specifier = f'{self.file_specifier}_' if self.file_specifier is not None else ''
 
-        file_path = f'{self._data_dir}/{self.currency_pair.value}_training_data.pickle'
-        feature_names_path = f'{self._data_dir}/{self.currency_pair.value}_training_features.pickle'
+        file_path = f'{self._data_dir}/{self.currency_pair.value}_{specifier}training_data.pickle'
+        feature_names_path = f'{self._data_dir}/{self.currency_pair.value}_{specifier}training_features.pickle'
+
+        training_array = np.array(self.training_data)
+        y = training_array[:, -1]
+        unique_labels, counts = np.unique(y, return_counts=True)
+        n = min(counts)
+        mask = np.hstack([np.random.choice(np.where(y == label)[0], n, replace=False) for label in unique_labels])
+
+        training_array = training_array[mask, :]
 
         with open(file_path, 'wb') as f:
-            pickle.dump(self.training_data, f)
+            pickle.dump(training_array, f)
 
         with open(feature_names_path, 'wb') as f:
             pickle.dump(self.feature_names, f)

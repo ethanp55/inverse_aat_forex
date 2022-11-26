@@ -1,5 +1,6 @@
 from aat.assumptions import Assumptions, TechnicalIndicators
 from aat.aat_communicator import AatCommunicator
+from genetics.genome import Genome
 from market_proxy.currency_pairs import CurrencyPairs
 from market_proxy.trades import TradeType
 import numpy as np
@@ -22,14 +23,54 @@ class AatMarketTester:
         n_preds = self.n_none_preds + self.n_buy_preds + self.n_sell_preds
 
         print('AAT PREDICTION RESULTS:')
+        accuracy = self.n_correct_none_preds / self.n_none_preds if self.n_none_preds > 0 else 'N.A.'
         print(f'Predicted {self.n_correct_none_preds} out of {self.n_none_preds} for no trades -- accuracy = '
-              f'{self.n_correct_none_preds / self.n_none_preds}')
+              f'{accuracy}')
+        accuracy = self.n_correct_buy_preds / self.n_buy_preds if self.n_buy_preds > 0 else 'N.A.'
         print(f'Predicted {self.n_correct_buy_preds} out of {self.n_buy_preds} for buy trades -- accuracy = '
-              f'{self.n_correct_buy_preds / self.n_buy_preds}')
+              f'{accuracy}')
+        accuracy = self.n_correct_sell_preds / self.n_sell_preds if self.n_sell_preds > 0 else 'N.A.'
         print(f'Predicted {self.n_correct_sell_preds} out of {self.n_sell_preds} for sell trades -- accuracy = '
-              f'{self.n_correct_sell_preds / self.n_sell_preds}')
+              f'{accuracy}')
+        accuracy = n_correct / n_preds if n_preds > 0 else 'N.A.'
         print(f'Predicted {n_correct} out of {n_preds} overall trades -- accuracy = '
-              f'{n_correct / n_preds}\n')
+              f'{accuracy}\n')
+
+
+class AatGeneticMarketTesterForCnnModel(AatMarketTester):
+    def __init__(self, currency_pair: CurrencyPairs, genome: Genome) -> None:
+        AatMarketTester.__init__(self, currency_pair)
+        self.genome = genome
+        self.genome.load_data()
+
+    def make_prediction(self, curr_idx: int, market_data: DataFrame, true_trade_type: TradeType) -> None:
+        ema200, ema100, atr, atr_sma, rsi, rsi_sma, adx, macd, macdsignal, slowk_rsi, slowd_rsi, \
+            vo, willy, willy_ema, key_level, is_support = \
+            market_data.loc[market_data.index[curr_idx - 1], ['ema200', 'ema100', 'atr', 'atr_sma', 'rsi', 'rsi_sma',
+                                                              'adx', 'macd', 'macdsignal', 'slowk_rsi', 'slowd_rsi',
+                                                              'vo', 'willy', 'willy_ema', 'key_level', 'is_support']]
+
+        bid_open, ask_open = market_data.loc[market_data.index[curr_idx], ['Bid_Open', 'Ask_Open']]
+
+        ti_vals = TechnicalIndicators(ema200, ema100, atr, atr_sma, rsi, rsi_sma, adx, macd, macdsignal, slowk_rsi,
+                                      slowd_rsi, vo, willy, willy_ema)
+
+        new_assumptions = Assumptions(ti_vals, bid_open, ask_open, key_level, true_trade_type)
+        new_tup = new_assumptions.create_aat_tuple()
+
+        x = np.array(new_tup[0:-1]).reshape(1, -1)
+
+        pred = self.genome.predict(x)
+        # print(pred)
+
+        # Update results
+        self.n_none_preds += 1 if pred == TradeType.NONE.value else 0
+        self.n_buy_preds += 1 if pred == TradeType.BUY.value else 0
+        self.n_sell_preds += 1 if pred == TradeType.SELL.value else 0
+
+        self.n_correct_none_preds += 1 if pred == TradeType.NONE.value and pred == true_trade_type.value else 0
+        self.n_correct_buy_preds += 1 if pred == TradeType.BUY.value and pred == true_trade_type.value else 0
+        self.n_correct_sell_preds += 1 if pred == TradeType.SELL.value and pred == true_trade_type.value else 0
 
 
 class AatKnnMarketTesterForCnnModel(AatMarketTester):

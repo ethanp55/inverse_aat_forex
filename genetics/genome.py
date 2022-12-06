@@ -65,6 +65,9 @@ class Genome:
     def load_data(self) -> None:
         pass
 
+    def feature_names(self) -> List[str]:
+        pass
+
 
 class Population:
     def __init__(self, genomes: List[Genome]) -> None:
@@ -142,6 +145,6 @@ class GeneticHelper(object):
 
     @staticmethod
     def add_correction_term(training_data: np.array, baseline: int) -> np.array:
-        correction_column = (training_data[:, -1] + 1 / baseline).reshape(-1, 1)
+        correction_column = ((training_data[:, -1] + 1) / baseline).reshape(-1, 1)
 
         return np.append(training_data, correction_column, 1)

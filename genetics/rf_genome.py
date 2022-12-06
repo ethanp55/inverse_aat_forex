@@ -30,7 +30,6 @@ class RfGenome(Genome):
             self.rf = random_search.best_estimator_
 
         else:
-
             self.rf = RandomForestRegressor(n_estimators=n_estimators, min_samples_leaf=min_samples_leaf,
                                             max_depth=max_depth, min_samples_split=min_samples_split)
             self.rf.fit(x_train_scaled, y_train)
@@ -47,10 +46,8 @@ class RfGenome(Genome):
         x_test_scaled = self.scaler.transform(self.x_test)
         corrections = self.rf.predict(x_test_scaled)
         predictions = np.round(self.baseline * corrections)
-        # predictions = corrections
         n_total = len(predictions)
-        matches = [GeneticHelper.prediction_comparison(predictions[i], self.y_test[i, -2])
-                   for i in range(n_total)]
+        matches = [GeneticHelper.prediction_comparison(predictions[i], self.y_test[i, -2]) for i in range(n_total)]
         n_matches = sum(matches)
 
         return n_matches / n_total
@@ -81,3 +78,15 @@ class RfGenome(Genome):
         self.scaler = pickle.load(open(scaler_file, 'rb'))
         self.rf = pickle.load(open(rf_file, 'rb'))
         self.features = pickle.load(open(features_file, 'rb'))
+
+    def feature_names(self) -> List[str]:
+        specifier = f'{self.file_specifier}_' if self.file_specifier is not None else ''
+        feature_names_file = f'../aat/training_data/{self.currency_pair.value}_{specifier}training_features.pickle'
+        feature_names = pickle.load(open(feature_names_file, 'rb'))
+
+        if self.features is None:
+            self.load_data()
+
+        assert len(self.features) == len(feature_names)
+
+        return [feature_names[i] for i in range(len(feature_names)) if self.features[i] == 1]

@@ -4,8 +4,7 @@ import pickle
 import random
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn.preprocessing import StandardScaler
 from typing import List, Optional, Tuple
 
@@ -109,9 +108,17 @@ class RfGenome(Genome):
         return mean_squared_error(self.y_test[:, -2], predictions)
 
     def save_data(self) -> None:
+        x_test_scaled = self.scaler.transform(self.x_test)
+        corrections = self.rf.predict(x_test_scaled)
+        y_test_pred = self.baseline * corrections
+        errors = np.square(y_test_pred - self.y_test[:, -2])
+
+        print(f'Final MSE = {round(errors.mean(), 5)}')
+
         scaler_file = './data/baseball_genetic_rf_scaler.pickle'
         rf_file = './data/baseball_genetic_rf.pickle'
         features_file = './data/baseball_genetic_rf_features.pickle'
+        errors_file = './data/baseball_genetic_rf_errors.csv'
 
         with open(scaler_file, 'wb') as f:
             pickle.dump(self.scaler, f)
@@ -121,6 +128,8 @@ class RfGenome(Genome):
 
         with open(features_file, 'wb') as f:
             pickle.dump(self.features, f)
+
+        np.savetxt(errors_file, errors, delimiter=',')
 
     def load_data(self) -> None:
         scaler_file = './data/baseball_genetic_rf_scaler.pickle'

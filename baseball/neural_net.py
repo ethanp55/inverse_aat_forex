@@ -57,6 +57,10 @@ train_iaat = np.array([BaseballAssumptions(BaseballFeatures(*list(x_test[i, :]))
 
 assert len(train_iaat) == len(y_pred)
 
+# Create training set for regular surrogate models
+train_surrogate = np.append(x_test, y_pred, 1)
+
+assert x_test.shape[0] == train_surrogate.shape[0] and x_test.shape[-1] + 1 == train_surrogate.shape[-1]
 
 # Save the inverse AAT training data and AAT feature names
 with open('./data/iaat_baseball_training_data.pickle', 'wb') as f:
@@ -67,5 +71,6 @@ aat_feature_names = BaseballAssumptions(BaseballFeatures(*list(x_test[0, :])), y
 with open('./data/iaat_baseball_training_features.pickle', 'wb') as f:
     pickle.dump(aat_feature_names, f)
 
-
-
+# Save the surrogate training data
+with open('./data/surrogate_baseball_training_data.pickle', 'wb') as f:
+    pickle.dump(train_surrogate, f)

@@ -1,15 +1,14 @@
 from baseball.baseball_genome import GeneticHelper, Population, RfGenome
-import numpy as np
 import random
 
 
 FITNESS_LIMIT = 0.01
-MAX_ITERATIONS = 500
+MAX_ITERATIONS = 250
 POPULATION_SIZE = 50
 BASELINE = GeneticHelper.get_baseline()
 N_FEATURES = GeneticHelper.n_features()
-GENOME_PERCENTAGE = 1 / 6
-GENOME_LENGTH = int(np.ceil(GENOME_PERCENTAGE * N_FEATURES))
+GENOME_PERCENTAGE = 1 / 8
+GENOME_LENGTH = int(round(GENOME_PERCENTAGE * N_FEATURES))
 POSSIBLE_N_MUTATIONS = list(range(int(N_FEATURES / 4)))
 GENOME_TYPE = RfGenome
 
